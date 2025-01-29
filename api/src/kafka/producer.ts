@@ -50,4 +50,4 @@ class KafkaProducer {
     }
 }
 
-export const kafkaProducer = new KafkaProducer();
+export default new KafkaProducer();
