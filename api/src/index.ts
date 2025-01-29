@@ -25,6 +25,6 @@ process.on('unhandledRejection', uncaughtExceptionHandler);
 app.use(errorHandler);
 
 app.listen(config.PORT, async () => {
-    // await setupKafka();
+    await setupKafka();
     console.log(`Server connected to port ${config.PORT}`);
 })

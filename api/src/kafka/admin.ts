@@ -20,13 +20,14 @@ class KafkaAdmin {
                         numPartitions: 3
                     }],
                 });
+                console.log("Topic created ✅");
             }
-            console.log(`Topic created successfully ✅`);
         }catch(error:any){
             console.log("Failed to create topic",error);
             throw error;
         }finally {
             await this.admin.disconnect();
+            console.log("admin disconnected ✅");
         }
     }
 }

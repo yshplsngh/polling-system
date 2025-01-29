@@ -22,19 +22,19 @@ model polls {
 }
 
 model options {
-  id          Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   option_text String
-  vote_count  Int    @default(0)
+  vote_count  Int     @default(0)
   poll_id     Int
-  poll        polls  @relation(fields: [poll_id], references: [id])
+  poll        polls   @relation(fields: [poll_id], references: [id])
   votes       votes[]
 }
 
 model votes {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   option_id Int
   option    options  @relation(fields: [option_id], references: [id])
   poll_id   Int
   poll      polls    @relation(fields: [poll_id], references: [id])
-  voted_at DateTime  @default(now())
+  voted_at  DateTime @default(now())
 }
