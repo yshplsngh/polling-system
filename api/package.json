@@ -6,10 +6,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --exec \"node -r esbuild-register ./src/index.ts\" -e .ts",
-    "consumer":"tsc && node dist/kafka/consumer.js",
-    "producer":"tsc && node dist/kafka/producer.js"
+    "migrate":"prisma migrate dev",
+    "generate":"prisma generate",
+    "studio":"prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^6.3.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -29,6 +31,7 @@
     "esbuild": "^0.20.1",
     "esbuild-register": "^3.5.0",
     "nodemon": "^3.1.0",
+    "prisma": "^6.3.0",
     "typescript": "^5.3.3"
   }
 }

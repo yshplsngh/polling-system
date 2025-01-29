@@ -1,59 +1,23 @@
-import { Pool, PoolClient } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
-class ConnectionPool {
-    private static instance: Pool | null = null;
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
 
-    private constructor() {}
+type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
 
-    public static getInstance(): Pool {
-        if (!ConnectionPool.instance) {
-            ConnectionPool.instance = new Pool({
-                user: 'postgres',
-                host: 'localhost',
-                database: 'polling',
-                password: 'postgres',
-                port: 5432,
-                max: 20,
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 2000,
-            });
+/**
+ * it checks in Node.js global for a prisma of exactly PrismaClientSingleton,
+ *  and if not exist it will be undefined
+ */
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClientSingleton | undefined;
+};
 
-            ConnectionPool.instance.on('error', (err:unknown) => {
-                console.log('Unexpected error on idle client', err);
-            });
-            console.log("New Database pool created");
-        }
-        return ConnectionPool.instance;
-    }
+/**
+ * if prisma found in global it returns prisma of type PrismaClientSingleton.
+ * or it will just create a new instance
+ */
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 
-    public static async closePool() {
-        if (ConnectionPool.instance) {
-            await ConnectionPool.instance.end();
-            ConnectionPool.instance = null;
-            console.log("Database pool closed");
-        }
-    }
-}
-
-export function getPool(): Pool {
-    return ConnectionPool.getInstance();
-}
-export function closePool() {
-    return ConnectionPool.closePool();
-}
-
-export async function execQuery<T>(queryFn: (client: PoolClient) => Promise<T>) {
-    let client;
-
-    try {
-        client = await getPool().connect();
-        return await queryFn(client);
-    } catch (error) {
-        console.error('Error acquiring client from pool:', error);
-        throw error;
-    } finally {
-        if (client) {
-            client.release();
-        }
-    }
-}
+export default prisma;

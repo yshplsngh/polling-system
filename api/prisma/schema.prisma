@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model polls {
+  id        Int       @id @default(autoincrement())
+  question  String
+  createdAt DateTime  @default(now())
+  options   options[]
+  votes     votes[]
+}
+
+model options {
+  id          Int    @id @default(autoincrement())
+  option_text String
+  vote_count  Int    @default(0)
+  poll_id     Int
+  poll        polls  @relation(fields: [poll_id], references: [id])
+  votes       votes[]
+}
+
+model votes {
+  id        Int       @id @default(autoincrement())
+  option_id Int
+  option    options  @relation(fields: [option_id], references: [id])
+  poll_id   Int
+  poll      polls    @relation(fields: [poll_id], references: [id])
+  voted_at DateTime  @default(now())
+}
