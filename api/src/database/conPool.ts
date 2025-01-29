@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 class ConnectionPool {
     private static instance: Pool | null = null;
 
-    private constructor() { }
+    private constructor() {}
 
     public static getInstance(): Pool {
         if (!ConnectionPool.instance) {
@@ -18,15 +18,15 @@ class ConnectionPool {
                 connectionTimeoutMillis: 2000,
             });
 
-            ConnectionPool.instance.on('error', (err) => {
-                console.error('Unexpected error on idle client', err);
+            ConnectionPool.instance.on('error', (err:unknown) => {
+                console.log('Unexpected error on idle client', err);
             });
             console.log("New Database pool created");
         }
         return ConnectionPool.instance;
     }
 
-    public static async closePool(): Promise<void> {
+    public static async closePool() {
         if (ConnectionPool.instance) {
             await ConnectionPool.instance.end();
             ConnectionPool.instance = null;
@@ -38,7 +38,7 @@ class ConnectionPool {
 export function getPool(): Pool {
     return ConnectionPool.getInstance();
 }
-export function closePool(): Promise<void> {
+export function closePool() {
     return ConnectionPool.closePool();
 }
 

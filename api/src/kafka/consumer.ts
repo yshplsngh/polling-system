@@ -3,21 +3,16 @@ import kafkaConf from './kafka.config'
 
 class KafkaConsumer {
     private consumer: Consumer;
-    private isConnected: boolean;
 
     constructor(){
-        this.consumer = kafkaConf.consumer({ groupId: 'poll-votes' });
-        this.isConnected = false;
+        this.consumer = kafkaConf.consumer({ groupId: 'polling-app'});
     }
 
-    async connect():Promise<void>{
+    async connect(){
         try{
             await this.consumer.connect();
-            this.isConnected = true;
-            console.log("Kafka consumer connected");
-
-            await this.consumer.subscribe({topic:'poll-votes', fromBeginning:true});
-
+            console.log("consumer connected ✅");
+            await this.consumer.subscribe({topic:"polling-topic", fromBeginning:true});
             await this.consumer.run({
                 eachMessage: async ({topic, partition, message}) => {
                     console.log({
@@ -33,13 +28,13 @@ class KafkaConsumer {
             throw error;
         }
     }
+    
     async disconnect() {
         try {
           await this.consumer.disconnect();
-          this.isConnected = false;
-          console.log("Kafka consumer disconnected");
+          console.log("consumer disconnected ❌");
         } catch (error) {
-            console.error('Failed to disconnect consumer:', error);
+            console.log('Failed to disconnect consumer:', error);
             throw error;
         }
     }
