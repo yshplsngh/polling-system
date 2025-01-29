@@ -1,6 +1,7 @@
 import { Producer } from 'kafkajs';
 import kafkaConf from './kafka.config'
 import { Vote } from './kafka.type';
+import { createError } from '../utils/errorHander';
 
 
 class KafkaProducer {
@@ -18,6 +19,7 @@ class KafkaProducer {
         console.log("Kafka producer connected");
     } catch(error: any) {
         console.error("Failed to connect to Kafka producer", error);
+        throw error;
     }
 
     async disconnect(): Promise<void> {
@@ -43,7 +45,9 @@ class KafkaProducer {
             });
         } catch (error) {
             console.error('Failed to send vote:', error);
-            throw error;
+            throw new createError('Failed to send vote', 500);
         }
     }
 }
+
+export const kafkaProducer = new KafkaProducer();

@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { zodErrorToString } from "./handleZodError";
 
 
+// will be used to create errors for user
 export class createError extends Error {
     code: number;
     constructor(message: string, code: number = 500) {
