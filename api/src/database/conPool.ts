@@ -21,13 +21,25 @@ class ConnectionPool {
             ConnectionPool.instance.on('error', (err) => {
                 console.error('Unexpected error on idle client', err);
             });
+            console.log("New Database pool created");
         }
         return ConnectionPool.instance;
     }
+
+    public static async closePool(): Promise<void> {
+        if (ConnectionPool.instance) {
+            await ConnectionPool.instance.end();
+            ConnectionPool.instance = null;
+            console.log("Database pool closed");
+        }
+    }
 }
 
-function getPool(): Pool {
+export function getPool(): Pool {
     return ConnectionPool.getInstance();
+}
+export function closePool(): Promise<void> {
+    return ConnectionPool.closePool();
 }
 
 export async function execQuery<T>(queryFn: (client: PoolClient) => Promise<T>) {

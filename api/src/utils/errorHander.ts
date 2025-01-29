@@ -1,7 +1,9 @@
 import { NextFunction, Response,Request } from "express";
 import { ZodError } from "zod";
 import { zodErrorToString } from "./handleZodError";
-
+import kafkaConsumer from "../kafka/consumer";
+import kafkaProducer from "../kafka/producer";
+import { closePool } from "../database/conPool";
 
 // will be used to create errors for user
 export class createError extends Error {
@@ -52,8 +54,11 @@ const errorHandler = (
     next();
 }
 
-const uncaughtExceptionHandler = (error: unknown) => {
+const uncaughtExceptionHandler = async (error: unknown) => {
     handleError({ _error: error, uncaught: true });
+    await closePool();
+    await kafkaConsumer.disconnect();
+    await kafkaProducer.disconnect();
     process.exit(1);
 }
 

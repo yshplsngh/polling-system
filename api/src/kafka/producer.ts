@@ -38,8 +38,8 @@ class KafkaProducer {
                 topic: 'poll-votes',
                 messages: [
                     {
-                        key: String(vote.pollId),
-                        value: JSON.stringify(vote)
+                        key: 'vote',
+                        value: 'yashpal singh'
                     }
                 ],
             });
