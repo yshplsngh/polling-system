@@ -28,6 +28,9 @@ class websocketSetup{
                     if(message.type === 'WS_CONNECT'){
                         this.handleConnection(ws,message);
                     }
+                    else if(message.type === 'WS_DISCONNECT'){
+                        this.handleDisconnect(ws,message);
+                    }
                 }catch(error){
                     console.log('error in websocket message',error);
                 }
@@ -50,6 +53,10 @@ class websocketSetup{
         }
         this.connectedClients.get(message.poll_id)?.add(ws);
         console.log('new client connected to poll',message.poll_id);
+    }
+    private handleDisconnect(ws:WebSocket,message:wsMessageType){
+        this.connectedClients.get(message.poll_id)?.delete(ws);
+        console.log('client disconnected from poll ',message.poll_id);
     }
 
     sendPollsData({poll_id,options}:{poll_id:number,options:options[]}){
