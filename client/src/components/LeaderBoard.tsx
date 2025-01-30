@@ -1,8 +1,8 @@
-// it will show all polls with poll question and total votes 
-// and top one option with highest vote
+// load votes in real time implement websocket
 
 import { useEffect, useState } from "react";
 import { fetchData } from "../utils";
+import { Link } from "react-router-dom";
 
 interface PollsType {
     poll_id: number;
@@ -32,7 +32,9 @@ const LeaderBoard = () => {
                 {polls.map((poll) => (
                     <div key={poll.poll_id}>
                         <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold mb-2">{poll.poll_question}</h2>
+                            <Link to={`/poll/${poll.poll_id}`}>
+                                <h2 className="text-xl font-bold mb-2 hover:text-blue-500 underline">{poll.poll_question}</h2>
+                            </Link>
                             <p className="text-gray-600">Total Votes: {poll.total_votes}</p>
                         </div>
                         <div className="flex justify-between items-center">
