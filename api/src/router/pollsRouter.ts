@@ -93,17 +93,34 @@ router.post('/polls/:id/vote', async (req: Request, res: Response, next: NextFun
 // for getting the leaderboard of all polls
 router.get('/leaderboard', async (req: Request, res: Response, next: NextFunction) => {
     const leaderboard = await prisma.polls.findMany({
-        include: {
-            options: true
+        select:{
+            id: true,
+            question: true,
+            options: {
+                select: {
+                    id: true,
+                    option_text: true,
+                    vote_count: true
+                }
+            },
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     })
 
     const finalLeaderboard = leaderboard.map((poll) => {
         return {
-            id: poll.id,
-            question: poll.question,
-            options: poll.options.reduce((acc, option) => {
-                acc && option.vote_count > acc.vote_count ? acc = option : null;
+            poll_id: poll.id,
+            poll_question: poll.question,
+            total_votes: poll.options.reduce((count, option) => {
+                count += option.vote_count;
+                return count;
+            }, 0),
+            top_option: poll.options.reduce((acc, option) => {
+                if(acc && option.vote_count > acc.vote_count){
+                    acc = option;
+                }
                 return acc;
             }, poll.options[0])
         }
@@ -111,7 +128,7 @@ router.get('/leaderboard', async (req: Request, res: Response, next: NextFunctio
 
     return res.status(200).json({
         message: 'Leaderboard fetched successfully',
-        data: finalLeaderboard
+        polls: finalLeaderboard
     })
 })
 
