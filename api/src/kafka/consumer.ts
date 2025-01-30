@@ -1,7 +1,7 @@
 import { Consumer } from 'kafkajs';
 import kafkaConf from './kafka.config'
 import prisma from '../database';
-import { createError } from '../utils/errorHander';
+import { wsInstance } from '../index';
 
 class KafkaConsumer {
     private consumer: Consumer;
@@ -52,7 +52,6 @@ class KafkaConsumer {
                         })
 
                         if (!pollNOption) {
-                            // throw new createError('Option not found', 404);
                             console.log(`Option not found, poll_id=${vote.poll_id} and option_id=${vote.option_id}`);
                             return;
                         }
@@ -68,7 +67,15 @@ class KafkaConsumer {
                             where: { id: vote.option_id },
                             data: { vote_count: { increment: 1 } }
                         });
-
+                        const allPollOptions = await tx.options.findMany({
+                            where:{
+                                poll_id:vote.poll_id
+                            }
+                        })
+                        wsInstance.sendPollsData({
+                            poll_id:vote.poll_id,
+                            options:allPollOptions
+                        })
                         console.log("vote added ✅");
                     })
                 }

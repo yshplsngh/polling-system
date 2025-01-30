@@ -4,10 +4,13 @@ import cors from 'cors';
 import config from './utils/config';
 import { errorHandler, uncaughtExceptionHandler } from './utils/errorHander';
 import setupKafka from './kafka/setupKafka';
-import kafkaProducer from './kafka/producer'
 import pollsRouter from './router/pollsRouter';
+import http from 'http';
+import websocketSetup from './websocket';
 
 const app = express();
+const server = http.createServer(app);
+export const wsInstance = new websocketSetup(server);
 
 app.use(morgan('dev'));
 app.use(express.json());
@@ -24,7 +27,7 @@ process.on('uncaughtException', uncaughtExceptionHandler);
 process.on('unhandledRejection', uncaughtExceptionHandler);
 app.use(errorHandler);
 
-app.listen(config.PORT, async () => {
+server.listen(config.PORT, async () => {
     await setupKafka();
     console.log(`Server connected to port ${config.PORT}`);
 })
