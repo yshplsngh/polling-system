@@ -59,13 +59,26 @@ router.get('/polls/:id', async (req: Request, res: Response, next: NextFunction)
             poll_id: poll.id
         }
     })
+    const total_votes = options.reduce((count, option) => {
+        count += option.vote_count;
+        return count;
+    }, 0)
+
+    const finalOptions = options.map((option) => {
+        return {
+            id: option.id,
+            option_text: option.option_text,
+            vote_count: option.vote_count,
+            percentage: Math.round((option.vote_count / total_votes) * 100)
+        }
+    })
 
     return res.status(200).json({
         message: 'Poll fetched successfully',
         data: {
             poll_id: poll.id,
             question: poll.question,
-            options: options
+            options: finalOptions
         }
     })
 })
