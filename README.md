@@ -15,41 +15,32 @@ A real-time polling application built with TypeScript, NodeJS, Express, WebSocke
    cd polling-system
    ```
 
-2. **Start Kafka and Zookeeper**
+2. **Start Kafka, Zookeeper**
    ```bash
    docker-compose up
    ```
 
-3. **Install dependencies**
+3. **Install Backend Dependencies**
    ```bash
-   # Install backend dependencies
    cd api
    npm install
+   ```
 
-   # Install frontend dependencies
+4. **Run Backend**
+   ```bash
+   cd api
+   npm run dev
+   ```
+
+5. **Install Frontend Dependencies**
+   ```bash
    cd ../client
    npm install
    ```
 
-3. **Set up environment variables**
+6. **Run Frontend**
    ```bash
-   # In api directory, create .env file
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/polling"
-   ```
-
-4. **Set up the database**
-   ```bash
-   cd api
-   npm run migrate
-   npm run generate
-   ```
-
-6. **Run the application**
-   ```bash
-   # Start backend (in api directory)
-   npm run dev
-
-   # Start frontend (in client directory)
+   cd ../client
    npm run dev
    ```
 
