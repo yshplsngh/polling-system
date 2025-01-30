@@ -18,12 +18,10 @@ const LeaderBoard = () => {
     const [polls, setPolls] = useState<PollsType[]>([]);
 
     useEffect(() => {
-        fetchData('/leaderboard', 'GET', {}).then((data) => {
+        fetchData('/leaderboard', 'GET').then((data) => {
             setPolls(data.polls);
         })
     }, [])
-
-    console.log(polls);
 
     return (
         <div className="bg-white p-6 flex flex-col items-center">

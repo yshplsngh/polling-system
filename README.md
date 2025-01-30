@@ -15,32 +15,21 @@ A real-time polling application built with TypeScript, NodeJS, Express, WebSocke
    cd polling-system
    ```
 
-2. **Start Kafka, Zookeeper**
+2. **Start Kafka, Zookeeper, Postgres, and Backend**
    ```bash
    docker-compose up
    ```
+   - you have to stop local postgres service if it is running on port 5432.
 
-3. **Install Backend Dependencies**
+3. **Install Frontend Dependencies**
    ```bash
-   cd api
+   cd client
    npm install
    ```
 
-4. **Run Backend**
+4. **Run Frontend**
    ```bash
-   cd api
-   npm run dev
-   ```
-
-5. **Install Frontend Dependencies**
-   ```bash
-   cd ../client
-   npm install
-   ```
-
-6. **Run Frontend**
-   ```bash
-   cd ../client
+   cd client
    npm run dev
    ```
 

@@ -1,7 +1,7 @@
 const API_URL = "http://localhost:4000/api/v1"
 
 
-const fetchData = async (url: string, method: string, body: any) => {
+const fetchData = async (url: string, method: string, body?: any) => {
 
     const config:RequestInit = {
         method: method,
