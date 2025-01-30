@@ -33,7 +33,7 @@ router.post('/polls', async (req: Request, res: Response, next: NextFunction) =>
 
     return res.status(201).json({
         message: 'Poll created successfully',
-        data: data
+        data: {poll_id: data.id}
     })
 });
 
