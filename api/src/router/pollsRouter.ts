@@ -62,7 +62,11 @@ router.get('/polls/:id', async (req: Request, res: Response, next: NextFunction)
 
     return res.status(200).json({
         message: 'Poll fetched successfully',
-        data: options
+        data: {
+            poll_id: poll.id,
+            question: poll.question,
+            options: options
+        }
     })
 })
 
