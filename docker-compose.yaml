@@ -7,6 +7,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=polling
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   zookeeper:
     image: zookeeper:latest
@@ -23,6 +28,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server=localhost:9092"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -31,7 +41,9 @@ services:
     ports:
       - "4000:4000"
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/polling
