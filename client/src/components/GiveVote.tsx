@@ -1,69 +1,64 @@
 import { useParams } from "react-router-dom";
 import { fetchData } from "../utils";
 import { useEffect, useState } from "react";
-
-interface PollType {
-    poll_id: number;
-    question: string;
-    options: {
-        id: number;
-        option_text: string;
-        vote_count: number;
-        percentage: number;
-    }[]
-}
+import { ConnectionMessageType, PollDataMessageType, PollDataType, SubscriptionType, WSType } from "./types";
 
 const GiveVote = () => {
     const { id: raw_poll_id } = useParams()
-    const poll_id = raw_poll_id && +raw_poll_id; // backend expects poll_id as number so convert string to number
-    const [poll, setPoll] = useState<PollType>()
+
+    // backend expects key of this page which is poll_id as number so convert string to number
+    const id = raw_poll_id && +raw_poll_id;
+    const [poll, setPoll] = useState<PollDataType>()
     const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
-    // const [isVoted, setIsVoted] = useState(false);
 
     useEffect(() => {
-        if (!poll_id) return;
-        fetchData(`/polls/${poll_id}`, "GET").then((data) => {
+        if (!id) return;
+        fetchData(`/polls/${id}`, "GET").then((data) => {
             if (data.data) {
                 setPoll(data.data)
+                // console.log(data.data)
             }
         })
-    }, [poll_id])
+    }, [id])
 
-    // for handling the websocket connection
+    // Websocket connection
     useEffect(() => {
-        if (!poll_id) return;
+        if (!id) return;
 
         const ws = new WebSocket('ws://localhost:4000');
         ws.onopen = () => {
-            ws.send(JSON.stringify({
-                type: "WS_CONNECT",
-                poll_id: poll_id
-            }))
+            const message: ConnectionMessageType = {
+                type: WSType.CONNECT,
+                key: id
+            }
+            ws.send(JSON.stringify(message))
         };
 
         ws.onmessage = (event) => {
-            const data = JSON.parse(event.data)
-            if(data.type === "SINGLE_POLL_UPDATE"){
+            const data = JSON.parse(event.data) as PollDataMessageType
+            // receive message from websocket only if it is for this page
+            if(data.type === SubscriptionType.SINGLE_POLL_UPDATE){
                 setPoll(data.data)
             }
         }
 
         return () => {
             if(ws.readyState === WebSocket.OPEN){
-                ws.send(JSON.stringify({
-                    type:"WS_DISCONNECT",
-                    poll_id: poll_id
-                }))
+                const message:ConnectionMessageType = {
+                    type: WSType.DISCONNECT,
+                    key: id
+                }
+                ws.send(JSON.stringify(message))
                 ws.close();
             }
         }
-    },[poll_id]);
+    },[id]);
 
     const handleVote = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!poll_id || !poll || !selectedOptionId || isNaN(selectedOptionId)) return;
+        if (!id || !poll || !selectedOptionId || isNaN(selectedOptionId)) return;
 
-        fetchData(`/polls/${poll_id}/vote`, "POST", { option_id: selectedOptionId }).then((data) => {
+        fetchData(`/polls/${id}/vote`, "POST", { option_id: selectedOptionId }).then((data) => {
             console.log(data)
             setSelectedOptionId(null)
             // setIsVoted(true)

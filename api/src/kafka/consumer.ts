@@ -90,6 +90,7 @@ class KafkaConsumer {
                         })
 
                         wsInstance.sendPollsData(updatedOptions.poll)
+                        wsInstance.sendLeaderboardData()
                         console.log("vote updated to all clients via websocket 🎉");
                     })
                 }

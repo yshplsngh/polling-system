@@ -41,5 +41,4 @@ A real-time polling application built with TypeScript, NodeJS, Express, WebSocke
 - The `polling-topic` is divided into 3 partitions. Each partition is consumed by only one consumer in the same consumer group, it enable the `parallel processing` of votes.
 - Three consumers (kafkaConsumer1, kafkaConsumer2, kafkaConsumer3) are initialized in the same consumer group. so that they can concurrently consume the votes from different partitions.
 - we can also add more group with  more consumers, but I have not added in this project.
-- I have added 2 `Replication factor` for fault tolerance.
-- 
+- I have added 1 `Replication factor` for 1 broker for fault tolerance.

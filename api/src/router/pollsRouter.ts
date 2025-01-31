@@ -33,7 +33,7 @@ router.post('/polls', async (req: Request, res: Response, next: NextFunction) =>
 
     return res.status(201).json({
         message: 'Poll created successfully',
-        data: {poll_id: data.id}
+        data: { poll_id: data.id }
     })
 });
 
@@ -57,6 +57,9 @@ router.get('/polls/:id', async (req: Request, res: Response, next: NextFunction)
     const options = await prisma.options.findMany({
         where: {
             poll_id: poll.id
+        },
+        orderBy:{
+            id:"asc"
         }
     })
     const total_votes = options.reduce((count, option) => {
@@ -69,7 +72,7 @@ router.get('/polls/:id', async (req: Request, res: Response, next: NextFunction)
             id: option.id,
             option_text: option.option_text,
             vote_count: option.vote_count,
-            percentage: Math.round((option.vote_count / total_votes) * 100)
+            percentage: Math.round((option.vote_count / total_votes) * 100) || 0
         }
     })
 
@@ -110,10 +113,14 @@ router.post('/polls/:id/vote', async (req: Request, res: Response, next: NextFun
 // for getting the leaderboard of all polls
 router.get('/leaderboard', async (req: Request, res: Response, next: NextFunction) => {
     const leaderboard = await prisma.polls.findMany({
-        select:{
+        select: {
             id: true,
             question: true,
             options: {
+                orderBy: {
+                    vote_count: 'desc'
+                },
+                take: 1,
                 select: {
                     id: true,
                     option_text: true,
@@ -125,27 +132,24 @@ router.get('/leaderboard', async (req: Request, res: Response, next: NextFunctio
             createdAt: 'desc'
         }
     })
+    const pollTotalVotes = await prisma.options.groupBy({
+        by: ['poll_id'],
+        _sum: { vote_count: true }
+    })
+    // map => poll_id, total_votes
+    const pollTotalVotesMap = new Map(pollTotalVotes.map(poll => [poll.poll_id,poll._sum.vote_count]))
 
-    const finalLeaderboard = leaderboard.map((poll) => {
+    const finalLeaderboard = leaderboard.map((poll)=>{
         return {
-            poll_id: poll.id,
-            poll_question: poll.question,
-            total_votes: poll.options.reduce((count, option) => {
-                count += option.vote_count;
-                return count;
-            }, 0),
-            top_option: poll.options.reduce((acc, option) => {
-                if(acc && option.vote_count > acc.vote_count){
-                    acc = option;
-                }
-                return acc;
-            }, poll.options[0])
+            id:poll.id,
+            question:poll.question,
+            total_votes: pollTotalVotesMap.get(poll.id) ?? 0,
+            options:poll.options[0] // options arraywill contain only one option
         }
     })
-
     return res.status(200).json({
         message: 'Leaderboard fetched successfully',
-        polls: finalLeaderboard
+        data: finalLeaderboard
     })
 })
 
