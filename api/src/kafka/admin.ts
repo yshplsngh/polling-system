@@ -17,7 +17,8 @@ class KafkaAdmin {
                 await this.admin.createTopics({
                     topics: [{
                         topic: "polling-topic",
-                        numPartitions: 3
+                        numPartitions: 3,
+                        replicationFactor: 2
                     }],
                 });
                 console.log("Topic created ✅");

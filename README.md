@@ -36,3 +36,10 @@ A real-time polling application built with TypeScript, NodeJS, Express, WebSocke
 7. **Access the application**
    - Frontend: http://localhost:5173
    - Backend: http://localhost:4000
+
+## How this kakfa handle Concurrency and Failover Handling:
+- The `polling-topic` is divided into 3 partitions. Each partition is consumed by only one consumer in the same consumer group, it enable the `parallel processing` of votes.
+- Three consumers (kafkaConsumer1, kafkaConsumer2, kafkaConsumer3) are initialized in the same consumer group. so that they can concurrently consume the votes from different partitions.
+- we can also add more group with  more consumers, but I have not added in this project.
+- I have added 2 `Replication factor` for fault tolerance.
+- 

@@ -6,7 +6,10 @@ class KafkaProducer {
     private producer: Producer;
 
     constructor() {
-        this.producer = kafkaConf.producer();
+        this.producer = kafkaConf.producer({
+            idempotent: true, // it will ensure that messages are delivered exactly once, even if the producer retries sending them.
+            transactionalId: "polling-system-producer"
+        });
     }
 
     async connect() {
