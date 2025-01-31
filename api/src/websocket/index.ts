@@ -1,43 +1,41 @@
 import { Server } from "http";
-import { WebSocketServer ,WebSocket} from "ws";
-import {options} from '@prisma/client'
+import { WebSocketServer, WebSocket } from "ws";
 
-interface wsMessageType{
-    type:'WS_CONNECT'|'WS_DISCONNECT';
-    poll_id:number;
+interface wsMessageType {
+    type: 'WS_CONNECT' | 'WS_DISCONNECT';
+    poll_id: number;
 }
 
-class websocketSetup{
-    private wss:WebSocketServer;
+class websocketSetup {
+    private wss: WebSocketServer;
 
     // key is poll_id and value is set of connected clients contain ws
-    private connectedClients:Map<number,Set<WebSocket>> = new Map();
+    private connectedClients: Map<number, Set<WebSocket>> = new Map();
 
-    constructor(server:Server){
-        this.wss = new WebSocketServer({server});
+    constructor(server: Server) {
+        this.wss = new WebSocketServer({ server });
         this.setupConnection();
     }
 
-    private setupConnection(){
-        this.wss.on('connection', async (ws:WebSocket) => {
+    private setupConnection() {
+        this.wss.on('connection', async (ws: WebSocket) => {
             console.log('webSocket client connected 🔌')
-            ws.on('message', (rawMessage)=>{
-                try{
+            ws.on('message', (rawMessage) => {
+                try {
                     const message = JSON.parse(rawMessage.toString()) as wsMessageType;
-                    // console.log('message',message);
-                    if(message.type === 'WS_CONNECT'){
-                        this.handleConnection(ws,message);
+                    if (message.type === 'WS_CONNECT') {
+                        this.handleConnection(ws, message);
                     }
-                    else if(message.type === 'WS_DISCONNECT'){
-                        this.handleDisconnect(ws,message);
+                    else if (message.type === 'WS_DISCONNECT') {
+                        this.handleDisconnect(ws, message);
                     }
-                }catch(error){
-                    console.log('error in websocket message',error);
+                } catch (error) {
+                    console.log('error in websocket message', error);
                 }
             })
 
-            ws.on('close',()=>{
-                this.connectedClients.forEach((singleClientMap)=>{
+            ws.on('close', () => {
+                this.connectedClients.forEach((singleClientMap) => {
                     // it will delete specific ws from the from all sets, 
                     // and single set for every poll_id
                     singleClientMap.delete(ws);
@@ -47,38 +45,51 @@ class websocketSetup{
         })
     }
 
-    private handleConnection(ws:WebSocket,message:wsMessageType){
-        if(!this.connectedClients.has(message.poll_id)){
-            this.connectedClients.set(message.poll_id,new Set());
+    private handleConnection(ws: WebSocket, message: wsMessageType) {
+        console.log("in handleConnection",message);
+        if (!this.connectedClients.has(message.poll_id)) {
+            this.connectedClients.set(message.poll_id, new Set());
         }
         this.connectedClients.get(message.poll_id)?.add(ws);
-        console.log('new client connected to poll',message.poll_id);
+        console.log('new client connected to poll', message.poll_id);
     }
-    private handleDisconnect(ws:WebSocket,message:wsMessageType){
+    private handleDisconnect(ws: WebSocket, message: wsMessageType) {
         this.connectedClients.get(message.poll_id)?.delete(ws);
-        console.log('client disconnected from poll ',message.poll_id);
+        console.log('client disconnected from poll ', message.poll_id);
     }
 
-    sendPollsData({poll_id,options}:{poll_id:number,options:options[]}){
+    sendPollsData({options,id:poll_id,question}: {
+        options: {
+            id: number;
+            option_text: string;
+            vote_count: number;
+        }[];
+        id: number;
+        question: string;
+    }) {
         const getClientsOfPoll = this.connectedClients.get(poll_id);
-        if(!getClientsOfPoll) return;
+        if (!getClientsOfPoll) return;
+
+        const totalVotes = options.reduce((acc,option)=> acc+option.vote_count,0);
 
         const message = JSON.stringify({
-            type:'POLL_UPDATE',
-            data:{
+            type: 'SINGLE_POLL_UPDATE',
+            data: {
                 poll_id,
+                question,
                 options:options.map((option)=>{
                     return {
                         id:option.id,
                         option_text:option.option_text,
-                        vote_count:option.vote_count
+                        vote_count:option.vote_count,
+                        percentage: Math.round((option.vote_count/totalVotes)*100)
                     }
                 })
             }
         })
 
-        getClientsOfPoll.forEach((singleClient)=>{
-            if(singleClient.readyState === WebSocket.OPEN){
+        getClientsOfPoll.forEach((singleClient) => {
+            if (singleClient.readyState === WebSocket.OPEN) {
                 singleClient.send(message);
             }
         })

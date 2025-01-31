@@ -23,7 +23,8 @@ class KafkaConsumer {
                         partition,
                         value: message?.value?.toString(),
                     })
-                    console.log(`Handling vote from consumer ${this.consumerId}`)
+                    console.log(`Handling vote from consumer ${this.consumerId}`);
+
                     const vote: {
                         poll_id: number,
                         option_id: number,
@@ -31,7 +32,7 @@ class KafkaConsumer {
                     } = JSON.parse(message?.value?.toString() || '');
 
                     await prisma.$transaction(async (tx) => {
-
+                        // handle duplicate vote
                         const existingVote = await tx.votes.findFirst({
                             where: {
                                 poll_id: vote.poll_id,
@@ -50,7 +51,6 @@ class KafkaConsumer {
                                 poll_id: vote.poll_id
                             }
                         })
-
                         if (!pollNOption) {
                             console.log(`Option not found, poll_id=${vote.poll_id} and option_id=${vote.option_id}`);
                             return;
@@ -63,20 +63,34 @@ class KafkaConsumer {
                                 voted_at: new Date(vote.timestamp)
                             }
                         });
-                        await tx.options.update({
-                            where: { id: vote.option_id },
-                            data: { vote_count: { increment: 1 } }
-                        });
-                        const allPollOptions = await tx.options.findMany({
-                            where:{
-                                poll_id:vote.poll_id
+
+                        const updatedOptions = await tx.options.update({
+                            where: {
+                                id: vote.option_id
+                            },
+                            data: { vote_count: { increment: 1 } },
+                            select:{
+                                poll:{
+                                    select:{
+                                        id:true,
+                                        question:true,
+                                        options:{
+                                            select:{
+                                                id:true,
+                                                option_text:true,
+                                                vote_count:true
+                                            },
+                                            orderBy:{
+                                                id:"asc"
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         })
-                        wsInstance.sendPollsData({
-                            poll_id:vote.poll_id,
-                            options:allPollOptions
-                        })
-                        console.log("vote added ✅");
+
+                        wsInstance.sendPollsData(updatedOptions.poll)
+                        console.log("vote updated to all clients via websocket 🎉");
                     })
                 }
             });

@@ -14,28 +14,59 @@ interface PollType {
 }
 
 const GiveVote = () => {
-    const { id } = useParams()
+    const { id: raw_poll_id } = useParams()
+    const poll_id = raw_poll_id && +raw_poll_id; // backend expects poll_id as number so convert string to number
     const [poll, setPoll] = useState<PollType>()
-    const [selectedOption, setSelectedOption] = useState<number | null>(null)
-    const [isVoted, setIsVoted] = useState(false);
+    const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
+    // const [isVoted, setIsVoted] = useState(false);
 
     useEffect(() => {
-        if (!id) return;
-        fetchData(`/polls/${id}`, "GET").then((data) => {
+        if (!poll_id) return;
+        fetchData(`/polls/${poll_id}`, "GET").then((data) => {
             if (data.data) {
                 setPoll(data.data)
             }
         })
-    }, [id])
+    }, [poll_id])
+
+    // for handling the websocket connection
+    useEffect(() => {
+        if (!poll_id) return;
+
+        const ws = new WebSocket('ws://localhost:4000');
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                type: "WS_CONNECT",
+                poll_id: poll_id
+            }))
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data)
+            if(data.type === "SINGLE_POLL_UPDATE"){
+                setPoll(data.data)
+            }
+        }
+
+        return () => {
+            if(ws.readyState === WebSocket.OPEN){
+                ws.send(JSON.stringify({
+                    type:"WS_DISCONNECT",
+                    poll_id: poll_id
+                }))
+                ws.close();
+            }
+        }
+    },[poll_id]);
 
     const handleVote = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!poll_id || !poll || !selectedOptionId || isNaN(selectedOptionId)) return;
 
-        if (!id || !poll || !selectedOption || isNaN(selectedOption)) return;
-
-        fetchData(`/polls/${id}/vote`, "POST", { option_id: selectedOption }).then((data) => {
+        fetchData(`/polls/${poll_id}/vote`, "POST", { option_id: selectedOptionId }).then((data) => {
             console.log(data)
-            setIsVoted(true)
+            setSelectedOptionId(null)
+            // setIsVoted(true)
         }).catch((err) => {
             console.log(err)
             alert(err.message)
@@ -43,57 +74,62 @@ const GiveVote = () => {
     }
 
     return (
-        <div className="max-w-xl mx-auto p-6">
+        <div className="max-w-xl mx-auto p-6 space-y-6">
             <h1 className="text-2xl font-bold mb-6 text-center">{poll?.question}</h1>
 
-            {/* vote form */}
-            {!isVoted ? (
-                <form className="space-y-4" onSubmit={(e) => handleVote(e)}>
-                    {poll?.options.map((option) => (
-                        <div
-                            key={option.id}
-                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                        >
-                            <label className="flex items-center space-x-3 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="poll-option"
-                                    value={option.id}
-                                    onChange={() => setSelectedOption(option.id)}
-                                    className="w-4 h-4 text-blue-600"
-                                />
-                                <span className="text-lg">{option.option_text}</span>
-                            </label>
-                        </div>
-                    ))}
-
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-6"
-                    >
-                        Submit Vote
-                    </button>
-                </form>
-            ) : ""}
-
-
-            {/* real time result */}
-            {isVoted ? (
-                <div className="space-y-4">
-                    {poll?.options.map((option) => (
-                        <div key={option.id} className="flex flex-row items-center space-x-1.5">
+            {/* {isVoted ? ( */}
+            <div className="space-y-4">
+                {poll?.options.map((option) => (
+                    <div key={option.id} className="flex flex-row items-center space-x-1.5">
+                        <div className="relative w-full h-12 border-2 border-blue-600 rounded-md overflow-hidden">
                             <div
-                                className={`border-2 border-blue-600 w-full rounded-md`}
-                            >
-                                <div className={`flex rounded-sm bg-blue-500 p-2`} style={{ width: `${option.percentage}%` }}>
-                                    <span className="text-lg">{option.option_text}</span>
-                                </div>
+                                className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500"
+                                style={{ width: `${option.percentage}%` }}
+                            />
+                            <div className="absolute top-0 left-0 w-full h-full flex items-center px-3">
+                                <span className="text-lg text-black drop-shadow-md">
+                                    {option.option_text}
+                                </span>
                             </div>
-                            <span className="text-lg">{option.percentage}%</span>
                         </div>
-                    ))}
-                </div>
-            ) : ""}
+                        <span className="text-lg min-w-[4rem] text-right">
+                            {option.percentage}%
+                        </span>
+                    </div>
+                ))}
+            </div>
+            {/* ) : ""} */}
+
+            <hr className="border-gray-200" />
+            {/* vote form */}
+            {/* {!isVoted ? ( */}
+            <form className="space-y-4" onSubmit={(e) => handleVote(e)}>
+                {poll?.options.map((option) => (
+                    <div
+                        key={option.id}
+                        className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="poll-option"
+                                checked={selectedOptionId === option.id}
+                                onChange={() => setSelectedOptionId(option.id)}
+                                className="w-4 h-4 text-blue-600"
+                            />
+                            <span className="text-lg">{option.option_text}</span>
+                        </label>
+                    </div>
+                ))}
+
+                <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-6"
+                >
+                    Submit Vote
+                </button>
+            </form>
+            {/* ) : ""} */}
         </div>
     )
 }

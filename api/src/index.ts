@@ -20,6 +20,9 @@ app.use(
         credentials: true,
     }),
 );
+const delay = (time: number) => new Promise((resolve) => {
+    setTimeout(resolve, time);
+});
 
 app.use('/api/v1', pollsRouter);
 
@@ -28,6 +31,12 @@ process.on('unhandledRejection', uncaughtExceptionHandler);
 app.use(errorHandler);
 
 server.listen(config.PORT, async () => {
+
+    // it will delay the server start for 5 seconds to make sure kafka inside docker is ready
+    // sometime api starts before kafka is ready and it will throw error
+    // its a temporary solution
+    // but it got the job done for now
+    await delay(5000)
     await setupKafka();
     console.log(`Server connected to port ${config.PORT}`);
 })
