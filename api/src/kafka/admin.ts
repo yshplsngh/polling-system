@@ -18,7 +18,7 @@ class KafkaAdmin {
                     topics: [{
                         topic: "polling-topic",
                         numPartitions: 3,
-                        replicationFactor: 2
+                        replicationFactor: 1
                     }],
                 });
                 console.log("Topic created ✅");
